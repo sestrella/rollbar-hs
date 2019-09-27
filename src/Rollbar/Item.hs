@@ -98,7 +98,7 @@ import Data.Aeson
     , (.:)
     , (.=)
     )
-import Data.Aeson.Types (typeMismatch)
+import Data.Aeson.Types (withObject)
 import Data.Maybe       (fromMaybe)
 
 import GHC.Generics (Generic)
@@ -207,8 +207,8 @@ itemKVs Item{accessToken, itemData} =
     ]
 
 instance FromJSON a => FromJSON (Item a headers) where
-    parseJSON (Object o) = Item <$> o .: "access_token" <*> o .: "data"
-    parseJSON v          = typeMismatch "Item a headers" v
+    parseJSON = withObject "Item a headers" $ \o ->
+        Item <$> o .: "access_token" <*> o .: "data"
 
 instance (RemoveHeaders headers, ToJSON a) => ToJSON (Item a headers) where
     toJSON = object . itemKVs
