@@ -38,7 +38,7 @@ import Data.Aeson
     , (.:)
     , (.=)
     )
-import Data.Aeson.Types (typeMismatch)
+import Data.Aeson.Types (typeMismatch, withObject, withText)
 import Data.Bifunctor   (bimap)
 import Data.Maybe       (catMaybes, fromMaybe)
 import Data.String      (IsString)
@@ -161,7 +161,7 @@ requestKVs Request{get, headers, method, queryString, rawBody, url, userIP} =
     ]
 
 instance FromJSON (Request headers) where
-    parseJSON (Object o) =
+    parseJSON = withObject "Request headers" $ \o ->
         Request
             <$> o .: "body"
             <*> o .: "GET"
@@ -170,7 +170,6 @@ instance FromJSON (Request headers) where
             <*> o .: "query_string"
             <*> o .: "url"
             <*> o .: "user_ip"
-    parseJSON v = typeMismatch "Request headers" v
 
 instance (RemoveHeaders headers) => ToJSON (Request headers) where
     toJSON = object . requestKVs
@@ -186,10 +185,9 @@ prettyURL (URL (host, parts)) =
     T.intercalate "/" (fromMaybe "" (host >>= myDecodeUtf8) : parts)
 
 instance FromJSON URL where
-    parseJSON (String s) = case T.splitOn "/" s of
+    parseJSON = withText "URL" $ \s -> case T.splitOn "/" s of
         host:parts | "http" `T.isPrefixOf` host -> pure $ URL (Just $ TE.encodeUtf8 host, parts)
         parts -> pure $ URL (Nothing, parts)
-    parseJSON v       = typeMismatch "URL" v
 
 instance ToJSON URL where
     toJSON = toJSON . prettyURL
