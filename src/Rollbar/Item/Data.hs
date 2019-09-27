@@ -39,7 +39,7 @@ import Data.Aeson
     , toJSON
     )
 import Data.Aeson.Types
-    (Options, fieldLabelModifier, omitNothingFields, typeMismatch)
+    (Options, fieldLabelModifier, omitNothingFields, typeMismatch, withText)
 import Data.String      (IsString)
 import Data.Time        (UTCTime)
 import Data.UUID        (UUID, fromText, toText)
@@ -135,9 +135,8 @@ newtype UUID4
     deriving (Eq, Generic, Show)
 
 instance FromJSON UUID4 where
-    parseJSON v@(String s) =
-        maybe (typeMismatch "UUID4" v) (pure . UUID4) $ fromText s
-    parseJSON v = typeMismatch "UUID4" v
+    parseJSON = withText "UUID4" $ \s ->
+        maybe (typeMismatch "UUID4" (String s)) (pure . UUID4) $ fromText s
 
 instance ToJSON UUID4 where
     toJSON (UUID4 u) = toJSON (toText u)

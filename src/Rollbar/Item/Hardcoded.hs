@@ -37,6 +37,8 @@ instance KnownSymbol symbol => ToJSON (Hardcoded symbol) where
     toEncoding = toEncoding . symbolVal
 
 instance KnownSymbol symbol => FromJSON (Hardcoded symbol) where
-    parseJSON (String str)
-        | str == pack (symbolVal (Hardcoded :: Hardcoded symbol)) = pure Hardcoded
+    parseJSON v@(String str) =
+        if str == pack (symbolVal (Hardcoded :: Hardcoded symbol))
+          then pure Hardcoded
+          else typeMismatch "Hardcoded symbol" v
     parseJSON v = typeMismatch "Hardcoded symbol" v
